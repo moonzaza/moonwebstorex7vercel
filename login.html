@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonX7 Store | Acceso Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/supabase.js"></script>
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            color: #e2e8f0;
+            background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 20%),
+                        radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.12), transparent 24%),
+                        linear-gradient(180deg, #02030b 0%, #090c16 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .glass-card {
+            background: rgba(10, 12, 28, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+            border-radius: 30px;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.46);
+        }
+        input, select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 18px;
+            color: #e2e8f0;
+            padding: 14px 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus, select:focus { border-color: #6366f1 !important; outline: none; box-shadow: 0 0 0 4px rgba(99,102,241,0.18); }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            box-shadow: 0 15px 35px rgba(56, 189, 248, 0.2);
+            transition: all 0.25s ease;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 18px 42px rgba(56, 189, 248, 0.28); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<div class="glass-card p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.24)]">
+            <span class="text-2xl font-bold">🌙</span>
+        </div>
+        <h1 class="text-2xl font-bold text-white">Acceso Administrador</h1>
+        <p class="text-zinc-400 text-sm mt-1">Ingresa tus credenciales</p>
+    </div>
+    
+    <form id="loginForm">
+        <div class="mb-5">
+            <label class="block text-sm font-medium mb-2 text-zinc-300">Correo electrónico</label>
+            <input type="email" id="email" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white" placeholder="admin@moonx7.com">
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-2 text-zinc-300">Contraseña</label>
+            <input type="password" id="password" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white" placeholder="••••••••">
+        </div>
+        
+        <div id="errorMessage" class="mb-4 text-red-500 text-sm text-center hidden"></div>
+        
+        <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 py-3 rounded-xl text-white font-bold text-lg transition hover:scale-[1.02]">
+            Ingresar al Panel
+        </button>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById('loginForm');
+    const errorDiv = document.getElementById('errorMessage');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        errorDiv.classList.add('hidden');
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Verificando...';
+        
+        const { data, error } = await window.m7Supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            errorDiv.textContent = '❌ ' + (error.message === 'Invalid login credentials' ? 'Credenciales incorrectas' : error.message);
+            errorDiv.classList.remove('hidden');
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Ingresar al Panel';
+            return;
+        }
+        
+        if (data.user) {
+            window.location.href = 'dashboard.html';
+        }
+    });
+</script>
+</body>
+</html>

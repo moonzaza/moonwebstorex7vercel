@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonX7 Store | Completar Pedido</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/supabase.js"></script>
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            color: #e2e8f0;
+            background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 20%),
+                        radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.14), transparent 24%),
+                        linear-gradient(180deg, #02030d 0%, #090b17 100%);
+        }
+        .glass-card {
+            background: rgba(10, 14, 30, 0.92);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+            border-radius: 28px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.30);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.28); }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            color: white;
+            transition: all 0.25s ease;
+            box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+        }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(56, 189, 248, 0.28); }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+        input, select, textarea {
+            width: 100%;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.88);
+            color: #e2e8f0;
+            padding: 14px 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #6366f1 !important; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18); }
+    </style>
+</head>
+<body class="bg-black text-gray-200">
+
+<nav class="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-zinc-800">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="location.href='index.html'">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.24)]">
+                    <span class="text-sm font-bold">🌙</span>
+                </div>
+                <span class="text-xl font-bold bg-gradient-to-r from-violet-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent">MoonX7</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="pt-24 pb-16 px-4 max-w-2xl mx-auto">
+    <div class="glass-card p-6 md:p-8">
+        <h1 class="text-2xl md:text-3xl font-bold mb-2 text-center">📋 Completar tu pedido</h1>
+        <p class="text-zinc-400 text-center mb-8">Completa tus datos y confirma la orden</p>
+        
+        <div class="mb-6 p-4 bg-zinc-900/50 rounded-xl">
+            <h3 class="font-bold mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-cyan-300">receipt</span> Resumen del pedido</h3>
+            <div id="orderSummary" class="space-y-2 text-sm max-h-48 overflow-y-auto"></div>
+            <div class="border-t border-zinc-800 pt-3 mt-3 flex justify-between font-bold">
+                <span>Total:</span>
+                <span id="totalAmount" class="text-cyan-300">$0.00</span>
+            </div>
+        </div>
+        
+        <form id="checkoutForm">
+            <div class="mb-5">
+                <label class="block text-sm font-medium mb-2 text-zinc-300">Nombre completo o Nickname *</label>
+                <input type="text" id="clientName" required class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 text-zinc-300">Número de WhatsApp *</label>
+                <input type="tel" id="clientPhone" required placeholder="+54 9 11 1234-5678" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white">
+                <p class="text-xs text-zinc-500 mt-1">Incluye código de país (ej: +54 para Argentina)</p>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="btn-primary w-full py-3 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">send</span>
+                Confirmar Orden de Compra
+            </button>
+        </form>
+    </div>
+</main>
+
+<script>
+    let cart = JSON.parse(localStorage.getItem('m7_cart') || '[]');
+    
+    if (cart.length === 0) {
+        alert('Tu carrito está vacío');
+        location.href = 'index.html';
+    }
+    
+    // Mostrar resumen
+    let total = 0;
+    const summaryDiv = document.getElementById('orderSummary');
+    summaryDiv.innerHTML = cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        return `<div class="flex justify-between"><span>${item.name} x${item.quantity}</span><span class="text-cyan-300">$${itemTotal.toFixed(2)}</span></div>`;
+    }).join('');
+    document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
+    
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const clientName = document.getElementById('clientName').value.trim();
+        const clientPhone = document.getElementById('clientPhone').value.trim();
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (!clientName || !clientPhone) {
+            alert('Por favor completa todos los campos');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Procesando...';
+        
+        const productsList = cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            category: item.category
+        }));
+        
+        const { error } = await window.m7Supabase
+            .from('orders')
+            .insert([{
+                client_name: clientName,
+                client_contact: clientPhone,
+                products_list: productsList,
+                total_price: total,
+                status: 'Pendiente'
+            }], { returning: 'minimal' });
+        
+        if (error) {
+            alert('Error al guardar el pedido: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined">send</span> Confirmar Orden de Compra';
+            return;
+        }
+        
+        localStorage.removeItem('m7_cart');
+        location.href = 'mis-pedidos.html';
+    });
+</script>
+</body>
+</html>

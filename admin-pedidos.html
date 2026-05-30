@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonX7 Store | Órdenes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/supabase.js"></script>
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 20%), radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.12), transparent 24%), linear-gradient(180deg, #03040d 0%, #090c16 100%); color: #e2e8f0; }
+        .glass-card { background: rgba(10, 14, 28, 0.92); backdrop-filter: blur(18px); border: 1px solid rgba(99, 102, 241, 0.18); border-radius: 24px; box-shadow: 0 24px 62px rgba(15, 23, 42, 0.28); transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.28); box-shadow: 0 28px 74px rgba(15, 23, 42, 0.34); }
+        .sidebar-link, .status-select, button { transition: all 0.25s ease; }
+        .sidebar-link:hover { background: rgba(99, 102, 241, 0.12); transform: translateX(3px); }
+        .status-badge { padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .status-pendiente { background: rgba(99, 102, 241, 0.18); color: #c7d2fe; }
+        .status-entregado { background: rgba(34, 197, 94, 0.16); color: #86efac; }
+        .status-cancelado { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+        .status-select { background: rgba(15, 23, 42, 0.95); color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.16); border-radius: 14px; }
+        .btn-primary { background: linear-gradient(135deg,#6366f1 0%,#38bdf8 100%); color:hwb(268 0% 0%); border-radius:24px; padding:0.9rem 1.25rem; box-shadow:0 14px 36px rgba(56,189,248,0.22); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow:0 18px 44px rgba(56,189,248,0.28); }
+    </style>
+</head>
+<body>
+
+<div id="app" class="flex">
+    <aside class="w-64 min-h-screen bg-black/50 border-r border-zinc-800 p-5 fixed left-0 top-0">
+        <div class="flex items-center gap-2 mb-8 pb-4 border-b border-zinc-800">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.24)]">
+                <span class="text-sm font-bold">🌙</span>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-violet-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent">MoonX7</span>
+        </div>
+        <nav class="space-y-2">
+            <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 rounded-xl transition">
+                <span class="material-symbols-outlined">dashboard</span> Panel Central
+            </a>
+            <a href="admin-pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 bg-violet-500/10 text-cyan-300 rounded-xl font-medium">
+                <span class="material-symbols-outlined">receipt_long</span> Órdenes
+            </a>
+            <a href="admin-productos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 rounded-xl transition">
+                <span class="material-symbols-outlined">inventory_2</span> Inventario
+            </a>
+        </nav>
+        <button id="logoutBtn" class="mt-auto absolute bottom-5 left-5 right-5 flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 text-red-400 rounded-xl hover:bg-red-600/30 transition">
+            <span class="material-symbols-outlined">logout</span> Cerrar Sesión
+        </button>
+    </aside>
+    
+    <main class="ml-64 flex-1 p-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold"><span class="material-symbols-outlined align-middle mr-2">receipt_long</span> Órdenes Recibidas</h1>
+                <p class="text-zinc-500 mt-2">Filtra y gestiona tus pedidos, y elimina los antiguos para mantener la base de datos limpia.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <select id="statusFilter" class="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2 text-white">
+                    <option value="all">Todas</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Entregado">Entregado</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+                <button id="deleteOldOrdersBtn" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined">delete_sweep</span> Borrar pedidos viejos
+                </button>
+            </div>
+        </div>
+        
+        <div id="ordersContainer" class="space-y-4"></div>
+    </main>
+</div>
+
+<script>
+    // Verificar autenticación
+    window.m7Supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) window.location.href = 'login.html';
+    });
+    
+    let currentFilter = 'all';
+    
+    async function loadOrders() {
+        let query = window.m7Supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (currentFilter !== 'all') query = query.eq('status', currentFilter);
+        
+        const { data, error } = await query;
+        if (error) return;
+        
+        const container = document.getElementById('ordersContainer');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="glass-card p-8 text-center text-zinc-500">No hay órdenes registradas</div>';
+            return;
+        }
+        
+        container.innerHTML = data.map(order => {
+            const productsHtml = order.products_list.map(p => `<span class="inline-block bg-zinc-800 px-2 py-1 rounded-lg text-xs mr-1 mb-1">${p.name} x${p.quantity}</span>`).join('');
+            return `
+                <div class="glass-card p-5">
+                    <div class="flex flex-wrap justify-between items-start gap-4">
+                        <div>
+                            <p class="text-xs text-zinc-500 mb-1">#${order.id}</p>
+                            <p class="font-bold text-white">${order.client_name}</p>
+                            <p class="text-sm text-zinc-400">📞 ${order.client_contact}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-cyan-300 font-bold text-xl">$${order.total_price}</p>
+                            <p class="text-xs text-zinc-500">${new Date(order.created_at).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-xs text-zinc-500 mb-1">Productos:</p>
+                        <div class="flex flex-wrap">${productsHtml}</div>
+                    </div>
+                    <div class="flex flex-wrap justify-between items-center mt-4 pt-3 border-t border-zinc-800 gap-3">
+                        <select data-order-id="${order.id}" class="status-select bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm">
+                            <option value="Pendiente" ${order.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="Entregado" ${order.status === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                            <option value="Cancelado" ${order.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+                        </select>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="contactWhatsApp('${order.client_contact}', '${order.client_name}', ${order.id})" class="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-sm hover:bg-green-600/30 transition flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">chat</span> Contactar
+                            </button>
+                            <button onclick="deleteOrder(${order.id})" class="bg-red-600/20 text-red-300 px-4 py-2 rounded-lg text-sm hover:bg-red-600/30 transition flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">delete</span> Borrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const orderId = select.dataset.orderId;
+                const newStatus = select.value;
+                await window.m7Supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+                loadOrders();
+            });
+        });
+    }
+    
+    window.contactWhatsApp = (phone, name, orderId) => {
+        const cleanPhone = phone.replace(/[^0-9+]/g, '');
+        const message = encodeURIComponent(`Hola ${name}! 👋\n\nTu pedido #${orderId} en MoonX7 Store está listo para ser entregado. Por favor contáctanos para recibir tu producto.\n\n¡Gracias por confiar en nosotros! 🌙`);
+        window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+    };
+
+    window.deleteOrder = async (orderId) => {
+        const confirmed = confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.');
+        if (!confirmed) return;
+
+        const { error } = await window.m7Supabase.from('orders').delete().eq('id', orderId);
+        if (error) {
+            alert('No se pudo borrar el pedido. Intenta de nuevo.');
+            return;
+        }
+        loadOrders();
+    };
+    
+    document.getElementById('statusFilter').addEventListener('change', (e) => {
+        currentFilter = e.target.value;
+        loadOrders();
+    });
+
+    document.getElementById('deleteOldOrdersBtn').addEventListener('click', async () => {
+        const confirmation = confirm('¿Eliminar los pedidos entregados o cancelados con más de 30 días de antigüedad? Esta acción no se puede deshacer.');
+        if (!confirmation) return;
+
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        const { error } = await window.m7Supabase.from('orders')
+            .delete()
+            .in('status', ['Entregado', 'Cancelado'])
+            .lt('created_at', cutoff.toISOString());
+
+        if (error) {
+            alert('No se pudieron borrar los pedidos antiguos. Intenta de nuevo.');
+            return;
+        }
+
+        alert('Pedidos antiguos eliminados correctamente.');
+        loadOrders();
+    });
+    
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await window.m7Supabase.auth.signOut();
+        window.location.href = 'index.html';
+    });
+    
+    loadOrders();
+</script>
+</body>
+</html>

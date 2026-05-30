@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonX7 Store | Pedido Confirmado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            color: #e2e8f0;
+            background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 22%),
+                        radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.12), transparent 24%),
+                        linear-gradient(180deg, #02020b 0%, #080911 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .check-animation {
+            animation: checkPop 0.55s ease-out;
+        }
+        @keyframes checkPop {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .glass-card {
+            background: rgba(10, 12, 28, 0.94);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+            border-radius: 28px;
+            box-shadow: 0 25px 70px rgba(15, 23, 42, 0.35);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .glass-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 30px 84px rgba(15, 23, 42, 0.33); }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%);
+            transition: all 0.25s ease;
+            box-shadow: 0 14px 38px rgba(56, 189, 248, 0.22);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 18px 40px rgba(56, 189, 248, 0.28); }
+        button, .btn-primary, .btn-secondary { transition: all 0.25s ease; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.06); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.18); padding: 0.9rem 1.3rem; border-radius: 18px; }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+        .nav-panel { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(5, 7, 18, 0.94); border-bottom: 1px solid rgba(99, 102, 241, 0.12); backdrop-filter: blur(14px); }
+        .nav-panel .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav-panel .brand { display: inline-flex; align-items: center; gap: 0.75rem; color: #fff; font-weight: 700; }
+        .nav-panel .brand .logo { width: 2.25rem; height: 2.25rem; border-radius: 1rem; display: grid; place-items: center; background: linear-gradient(135deg, #8b5cf6, #38bdf8); box-shadow: 0 14px 30px rgba(56, 189, 248, 0.2); }
+        .nav-panel .nav-right button { color: #cbd5e1; }
+        .content-wrap { padding-top: 5.25rem; }
+    </style>
+</head>
+<body class="bg-black text-gray-200 min-h-screen">
+<div class="nav-panel">
+    <div class="nav-inner">
+        <div class="brand"><span class="logo">🌙</span><span>MoonX7 Store</span></div>
+        <div class="nav-right"><button onclick="location.href='index.html'" class="btn-secondary">Volver a la tienda</button></div>
+    </div>
+</div>
+<div class="content-wrap">
+
+<div class="text-center px-4">
+    <div class="check-animation w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-5xl">check</span>
+    </div>
+    
+    <h1 class="text-3xl md:text-4xl font-bold mb-3">¡Pedido Recibido!</h1>
+    <p class="text-zinc-400 mb-6">Tu orden ha sido registrada exitosamente</p>
+    
+    <div class="glass-card inline-block p-6 rounded-2xl bg-zinc-900/50 border border-cyan-300/15 mb-6">
+        <p class="text-zinc-400 text-sm mb-2">Número de orden</p>
+        <p id="orderNumber" class="text-2xl font-bold text-cyan-300 font-mono">---</p>
+    </div>
+    
+    <p class="text-zinc-400 max-w-md mx-auto mb-8">
+        El administrador se comunicará contigo a la brevedad a través de WhatsApp para coordinar la entrega de tu pedido.
+    </p>
+    
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="location.href='index.html'" class="btn-primary px-6 py-2 rounded-xl text-white font-medium">← Volver a la tienda</button>
+        <button onclick="location.href='compra.html'" class="bg-zinc-800 px-6 py-2 rounded-xl text-white font-medium hover:bg-zinc-700 transition">Ver carrito</button>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('order');
+    
+    if (orderId) {
+        document.getElementById('orderNumber').textContent = `#${orderId}`;
+    } else {
+        document.getElementById('orderNumber').textContent = '#---';
+    }
+</script>
+</div>
+</body>
+</html>

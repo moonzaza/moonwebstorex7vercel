@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonX7 Store | Dashboard Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/supabase.js"></script>
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { min-height: 100vh; color: #e2e8f0; background: radial-gradient(circle at top left, rgba(99,102,241,0.18), transparent 20%), radial-gradient(circle at bottom right, rgba(34,211,238,0.12), transparent 24%), linear-gradient(180deg, #03040d 0%, #090c16 100%); }
+        .glass-card { background: rgba(10, 14, 28, 0.92); backdrop-filter: blur(18px); border: 1px solid rgba(99, 102, 241, 0.18); border-radius: 26px; box-shadow: 0 24px 70px rgba(15, 23, 42, 0.30); transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.26); box-shadow: 0 28px 86px rgba(15, 23, 42, 0.32); }
+        .sidebar-link { transition: all 0.3s ease; }
+        .sidebar-link:hover { background: rgba(99, 102, 241, 0.14); transform: translateX(4px); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%); color: white; border-radius: 24px; padding: 1rem 1.3rem; box-shadow: 0 14px 36px rgba(56, 189, 248, 0.22); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 18px 44px rgba(56, 189, 248, 0.28); }
+        input, select, textarea { background: rgba(15, 23, 42, 0.92); color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.14); border-radius: 18px; padding: 14px 16px; width: 100%; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        input:focus, select:focus, textarea:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.16); }
+    </style>
+</head>
+<body>
+
+<div id="app" class="flex">
+    <!-- Sidebar -->
+    <aside class="w-64 min-h-screen bg-black/50 border-r border-zinc-800 p-5 fixed left-0 top-0">
+        <div class="flex items-center gap-2 mb-8 pb-4 border-b border-zinc-800">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.24)]">
+                <span class="text-sm font-bold">🌙</span>
+            </div>
+            <span class="text-xl font-bold bg-gradient-to-r from-violet-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent">MoonX7</span>
+        </div>
+        
+        <nav class="space-y-2">
+            <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 bg-violet-500/10 text-cyan-300 rounded-xl font-medium">
+                <span class="material-symbols-outlined">dashboard</span> Panel Central
+            </a>
+            <a href="admin-pedidos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 rounded-xl transition">
+                <span class="material-symbols-outlined">receipt_long</span> Órdenes
+            </a>
+            <a href="admin-productos.html" class="sidebar-link flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 rounded-xl transition">
+                <span class="material-symbols-outlined">inventory_2</span> Inventario
+            </a>
+        </nav>
+        
+        <button id="logoutBtn" class="mt-auto absolute bottom-5 left-5 right-5 flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 text-red-400 rounded-xl hover:bg-red-600/30 transition">
+            <span class="material-symbols-outlined">logout</span> Cerrar Sesión
+        </button>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 p-8">
+        <h1 class="text-3xl font-bold mb-2">Panel de Control</h1>
+        <p class="text-zinc-400 mb-8">Bienvenido al panel de administración de MoonX7 Store</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="material-symbols-outlined text-3xl text-cyan-300">inventory_2</span>
+                    <span class="text-zinc-500 text-sm">Total</span>
+                </div>
+                <p class="text-4xl font-bold text-white" id="totalProducts">0</p>
+                <p class="text-zinc-400 text-sm mt-2">Productos registrados</p>
+            </div>
+            
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="material-symbols-outlined text-3xl text-cyan-300">receipt_long</span>
+                    <span class="text-zinc-500 text-sm">Total</span>
+                </div>
+                <p class="text-4xl font-bold text-white" id="totalOrders">0</p>
+                <p class="text-zinc-400 text-sm mt-2">Órdenes recibidas</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Verificar autenticación
+    window.m7Supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+            window.location.href = 'login.html';
+        }
+    });
+    
+    // Cargar métricas
+    async function loadMetrics() {
+        const { count: productCount } = await window.m7Supabase.from('products').select('*', { count: 'exact', head: true });
+        const { count: orderCount } = await window.m7Supabase.from('orders').select('*', { count: 'exact', head: true });
+        
+        document.getElementById('totalProducts').textContent = productCount || 0;
+        document.getElementById('totalOrders').textContent = orderCount || 0;
+    }
+    
+    loadMetrics();
+    
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await window.m7Supabase.auth.signOut();
+        window.location.href = 'index.html';
+    });
+</script>
+</body>
+</html>

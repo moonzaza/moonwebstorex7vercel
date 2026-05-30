@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MoonX7 | Panel de Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <script src="js/supabase.js"></script>
+    <script src="js/neon-effects.js"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 22%),
+                        radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.14), transparent 24%),
+                        linear-gradient(180deg, #02030d 0%, #090c16 100%);
+            overflow-x: hidden; color: #e2e8f0;
+        }
+        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100vh; background: rgba(8, 11, 21, 0.96); border-right: 1px solid rgba(99, 102, 241, 0.12); transition: left 0.3s ease; z-index: 100; padding: 24px; }
+        .sidebar.open { left: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 99; display: none; }
+        .overlay.active { display: block; }
+        @media (min-width: 768px) { .sidebar { left: 0; width: 260px; } .menu-toggle { display: none; } .overlay { display: none !important; } main { margin-left: 260px; } }
+        .stat-card { background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 14, 28, 0.95)); border: 1px solid rgba(99, 102, 241, 0.18); border-radius: 24px; transition: transform 0.3s ease, border-color 0.3s ease; box-shadow: 0 24px 58px rgba(15, 23, 42, 0.25); }
+        .stat-card:hover { border-color: rgba(99, 102, 241, 0.32); transform: translateY(-2px); }
+        .product-card { background: rgba(10, 14, 28, 0.94); border: 1px solid rgba(99, 102, 241, 0.14); border-radius: 24px; transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14); }
+        .product-card:hover { transform: translateY(-2px); border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 24px 58px rgba(15, 23, 42, 0.22); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #38bdf8 100%); transition: all 0.25s ease; color: white; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(56, 189, 248, 0.22); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.06); transition: all 0.25s ease; color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.16); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+        input, select, textarea { background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(99, 102, 241, 0.14); border-radius: 18px; padding: 14px 16px; color: #e2e8f0; width: 100%; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        input:focus, select:focus, textarea:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.16); }
+        label { font-size: 0.875rem; font-weight: 500; color: #9ca3af; margin-bottom: 8px; display: block; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px; }
+        .modal.active { display: flex; }
+        .modal-content { background: rgba(10, 14, 28, 0.96); border: 1px solid rgba(99, 102, 241, 0.18); border-radius: 28px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; padding: 28px; }
+        .page-top-card { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(99, 102, 241, 0.16); border-radius: 32px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24); overflow: hidden; }
+        .page-top-card .top-card-body { padding: 28px; }
+        .tag-pill { background: rgba(99, 102, 241, 0.12); color: #c7d2fe; border-radius: 999px; padding: 6px 12px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; }
+        .badge-hot { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; border-radius: 999px; background: rgba(248, 113, 113, 0.14); color: #fecaca; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        /* ── PLANES DE PRECIOS ── */
+        .plans-section { background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 20px; padding: 16px; }
+        .plan-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .plan-row input { padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; }
+        .btn-remove-plan { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; flex-shrink: 0; width: auto; }
+        .btn-remove-plan:hover { background: rgba(239, 68, 68, 0.3); }
+        .btn-add-plan { background: rgba(99, 102, 241, 0.15); color: #c7d2fe; border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 12px; padding: 10px 16px; cursor: pointer; font-size: 0.85rem; width: 100%; transition: all 0.2s; margin-top: 4px; }
+        .btn-add-plan:hover { background: rgba(99, 102, 241, 0.25); }
+        .plan-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .plan-chip { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.25); color: #a5f3fc; border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle fixed top-5 left-4 z-50 md:hidden bg-zinc-900 p-2 rounded-xl border border-zinc-700" onclick="toggleSidebar()">
+    <span class="material-symbols-outlined text-white">menu</span>
+</button>
+
+<aside class="sidebar" id="sidebar">
+    <div class="flex items-center justify-between mb-8 pb-6 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center">🌙</div>
+            <span class="text-xl font-bold bg-gradient-to-r from-violet-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent">MoonX7</span>
+        </div>
+        <button class="md:hidden text-zinc-400" onclick="toggleSidebar()">✕</button>
+    </div>
+    <nav class="space-y-1">
+        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 hover:text-cyan-300 rounded-xl transition">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="admin-productos.html" class="flex items-center gap-3 px-4 py-3 bg-violet-500/10 text-cyan-300 rounded-xl font-medium transition">
+            <span class="material-symbols-outlined">inventory_2</span> Productos
+        </a>
+        <a href="admin-pedidos.html" class="flex items-center gap-3 px-4 py-3 text-zinc-400 hover:bg-violet-500/10 hover:text-cyan-300 rounded-xl transition">
+            <span class="material-symbols-outlined">receipt_long</span> Pedidos
+        </a>
+    </nav>
+    <button id="logoutBtn" class="absolute bottom-6 left-6 right-6 flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 text-red-400 rounded-xl hover:bg-red-600/30 transition">🚪 Cerrar Sesión</button>
+</aside>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<main class="p-4 md:p-8 pb-24">
+    <div class="page-top-card mb-8">
+        <div class="top-card-body">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="space-y-3">
+                    <p class="text-sm uppercase tracking-[0.28em] text-cyan-300">MoonX7 Admin</p>
+                    <h1 class="text-3xl md:text-4xl font-black text-white">Gestión de productos</h1>
+                    <p class="max-w-2xl text-zinc-400">Crea productos con planes de precios personalizados (días, semanas, meses, etc.).</p>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <span class="tag-pill">Planes de precios</span>
+                        <span class="tag-pill">UX rápido</span>
+                        <span class="tag-pill">Admin real</span>
+                    </div>
+                </div>
+                <button id="addProductBtn" class="btn-primary px-5 py-3 rounded-3xl text-white font-semibold inline-flex items-center gap-2 justify-center w-full lg:w-auto">
+                    <span class="material-symbols-outlined">add</span> Crear producto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card p-6 text-center"><p class="text-zinc-400 text-xs uppercase tracking-[0.24em] mb-2">Total</p><p class="text-3xl font-bold text-white" id="totalProducts">0</p></div>
+        <div class="stat-card p-6 text-center"><p class="text-zinc-400 text-xs uppercase tracking-[0.24em] mb-2">Valor</p><p class="text-3xl font-bold text-cyan-300" id="totalValue">$0</p></div>
+        <div class="stat-card p-6 text-center"><p class="text-zinc-400 text-xs uppercase tracking-[0.24em] mb-2">Stock</p><p class="text-3xl font-bold text-white" id="totalStock">0</p></div>
+        <div class="stat-card p-6 text-center"><p class="text-zinc-400 text-xs uppercase tracking-[0.24em] mb-2">HOT</p><p class="text-3xl font-bold text-cyan-300" id="hotCount">0</p></div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+            <h2 class="text-xl font-bold text-white">📦 Inventario</h2>
+            <p class="text-zinc-500 text-sm mt-1">Productos creados en tu catálogo MoonX7.</p>
+        </div>
+        <span class="text-xs text-zinc-500" id="itemCount">0 items</span>
+    </div>
+    <div id="productsGrid" class="space-y-4"></div>
+</main>
+
+<!-- Modal -->
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-5">
+            <h2 id="modalTitle" class="text-xl font-bold text-cyan-300">Agregar Producto</h2>
+            <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-2xl leading-none">✕</button>
+        </div>
+
+        <form id="productForm" class="space-y-4">
+            <input type="hidden" id="productId">
+
+            <div>
+                <label>📌 Nombre del Producto *</label>
+                <input type="text" id="prodName" required placeholder="Ej: Mod Menu Pro">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label>💰 Precio base (USD)</label>
+                    <input type="number" id="prodPrice" step="0.01" placeholder="0.00">
+                    <p class="text-xs text-zinc-500 mt-1">Opcional si usas planes</p>
+                </div>
+                <div>
+                    <label>📦 Stock</label>
+                    <input type="number" id="prodStock" value="9999999" placeholder="Cantidad">
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════ -->
+            <!-- SECCIÓN DE PLANES DE PRECIOS          -->
+            <!-- ══════════════════════════════════════ -->
+            <div class="plans-section">
+                <div class="flex items-center justify-between mb-3">
+                    <label class="mb-0" style="margin-bottom:0">🗓️ Planes de precios</label>
+                    <span class="text-xs text-zinc-500">Ej: 1 día, 7 días, 1 mes...</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mb-2 px-1">
+                    <span class="text-xs text-zinc-500">Etiqueta</span>
+                    <span class="text-xs text-zinc-500">Precio $</span>
+                    <span></span>
+                </div>
+
+                <div id="plansContainer"></div>
+
+                <button type="button" class="btn-add-plan" onclick="addPlanRow()">
+                    + Agregar plan
+                </button>
+
+                <div class="plan-preview" id="planPreview"></div>
+            </div>
+            <!-- ══════════════════════════════════════ -->
+
+            <div>
+                <label>🏷️ Categoría</label>
+                <input type="text" id="prodCategory" placeholder="Ej: Mods, Software, Security...">
+            </div>
+
+            <div>
+                <label>📝 Descripción General</label>
+                <textarea id="prodDesc" rows="3" placeholder="¿Qué es este producto?"></textarea>
+            </div>
+
+            <div>
+                <label>✨ Características (separadas por comas)</label>
+                <textarea id="prodFeatures" rows="2" placeholder="Ej: Soporte 24/7, Sin lag, HD Graphics..."></textarea>
+            </div>
+
+            <div>
+                <label>🖼️ URL de Imagen</label>
+                <input type="url" id="prodImage" placeholder="https://...">
+            </div>
+
+            <div>
+                <label>📤 Subir imagen (Galería / Cámara)</label>
+                <input type="file" id="prodImageFile" accept="image/*" capture="environment">
+                <div id="prodImagePreviewWrap" class="mt-3">
+                    <img id="prodImagePreview" src="" alt="preview" class="w-32 h-20 object-cover rounded-lg hidden">
+                </div>
+            </div>
+
+            <div>
+                <label>📚 Link Tutorial / Documentación</label>
+                <input type="url" id="prodTutorialUrl" placeholder="https://example.com/tutorial">
+            </div>
+
+            <div>
+                <label>🎥 Link Video YouTube</label>
+                <input type="url" id="prodYoutubeUrl" placeholder="https://youtube.com/watch?v=...">
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="prodHot" class="w-5 h-5 accent-cyan-300">
+                <label class="text-sm text-zinc-300" style="margin-bottom:0">🔥 Marcar como HOT (destacar en catálogo)</label>
+            </div>
+
+            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-bold">💾 Guardar Producto</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    window.m7Supabase.auth.getSession().then(({ data: { session } }) => { if (!session) location.href = 'login.html'; });
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    // ─── PLANES ───────────────────────────────────────
+    function addPlanRow(label = '', price = '') {
+        const container = document.getElementById('plansContainer');
+        const row = document.createElement('div');
+        row.className = 'plan-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Ej: 1 día" value="${label}" class="plan-label" oninput="updatePreview()">
+            <input type="number" placeholder="0.00" step="0.01" value="${price}" class="plan-price" oninput="updatePreview()">
+            <button type="button" class="btn-remove-plan" onclick="this.parentElement.remove(); updatePreview()">✕</button>
+        `;
+        container.appendChild(row);
+        updatePreview();
+    }
+
+    function getPlans() {
+        const rows = document.querySelectorAll('#plansContainer .plan-row');
+        const plans = [];
+        rows.forEach(row => {
+            const label = row.querySelector('.plan-label').value.trim();
+            const price = parseFloat(row.querySelector('.plan-price').value);
+            if (label && !isNaN(price)) plans.push({ label, price });
+        });
+        return plans;
+    }
+
+    function updatePreview() {
+        const plans = getPlans();
+        const preview = document.getElementById('planPreview');
+        preview.innerHTML = plans.map(p => `<span class="plan-chip">${p.label} — $${p.price.toFixed(2)}</span>`).join('');
+    }
+
+    function loadPlans(plans) {
+        document.getElementById('plansContainer').innerHTML = '';
+        if (plans && plans.length) {
+            plans.forEach(p => addPlanRow(p.label, p.price));
+        }
+    }
+
+    // ─── PRODUCTOS ────────────────────────────────────
+    async function loadProducts() {
+        const { data } = await window.m7Supabase.from('products').select('*').order('id');
+        if (!data) return;
+
+        document.getElementById('totalProducts').textContent = data.length;
+        document.getElementById('totalStock').textContent = data.reduce((s, p) => s + (p.stock || 0), 0);
+        document.getElementById('totalValue').textContent = `$${data.reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2)}`;
+        document.getElementById('hotCount').textContent = data.filter(p => p.hot).length;
+        document.getElementById('itemCount').textContent = `${data.length} items`;
+
+        const grid = document.getElementById('productsGrid');
+        if (!data.length) { grid.innerHTML = '<div class="text-center text-zinc-500 py-10">No hay productos aún.</div>'; return; }
+
+        grid.innerHTML = data.map(p => {
+            const plans = p.plans && p.plans.length
+                ? `<div class="flex flex-wrap gap-1 mt-1">${p.plans.map(pl => `<span class="plan-chip">${pl.label} $${pl.price}</span>`).join('')}</div>`
+                : `<span class="block text-lg font-bold text-cyan-300">$${p.price || 0}</span>`;
+            return `
+            <div class="product-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                    <img src="${p.image || 'https://placehold.co/64x64/121827/7c3aed?text=MX7'}" class="w-14 h-14 rounded-2xl object-cover bg-zinc-900 border border-cyan-300/10">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="font-semibold text-white">${escapeHtml(p.name)}</h3>
+                            ${p.hot ? '<span class="badge-hot">HOT</span>' : ''}
+                        </div>
+                        <p class="text-xs text-zinc-400 mt-1">${escapeHtml(p.category || 'Sin categoría')}</p>
+                        ${plans}
+                    </div>
+                </div>
+                <div class="flex flex-col sm:items-end gap-2">
+                    <span class="text-xs text-zinc-400">Stock: ${p.stock || 0}</span>
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <button onclick="editProduct(${p.id})" class="btn-secondary px-4 py-2 rounded-2xl text-sm">✏️ Editar</button>
+                        <button onclick="deleteProduct(${p.id})" class="btn-secondary px-4 py-2 rounded-2xl text-sm border-red-500 text-red-300 hover:bg-red-500/10">🗑️ Eliminar</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+    window.editProduct = async (id) => {
+        const { data } = await window.m7Supabase.from('products').select('*').eq('id', id).single();
+        document.getElementById('productId').value = data.id;
+        document.getElementById('prodName').value = data.name || '';
+        document.getElementById('prodPrice').value = data.price || '';
+        document.getElementById('prodStock').value = data.stock || 9999999;
+        document.getElementById('prodCategory').value = data.category || '';
+        document.getElementById('prodDesc').value = data.description || '';
+        document.getElementById('prodFeatures').value = data.features || '';
+        document.getElementById('prodImage').value = data.image || '';
+            const preview = document.getElementById('prodImagePreview');
+            if (data.image) { preview.src = data.image; preview.classList.remove('hidden'); }
+            else { preview.src = ''; preview.classList.add('hidden'); }
+        document.getElementById('prodTutorialUrl').value = data.tutorial_url || '';
+        document.getElementById('prodYoutubeUrl').value = data.youtube_url || '';
+        document.getElementById('prodHot').checked = data.hot || false;
+        loadPlans(data.plans || []);
+        document.getElementById('modalTitle').textContent = 'Editar Producto';
+        document.getElementById('productModal').classList.add('active');
+    };
+
+    window.deleteProduct = async (id) => {
+        if (confirm('¿Eliminar este producto permanentemente?')) {
+            await window.m7Supabase.from('products').delete().eq('id', id);
+            loadProducts();
+        }
+    };
+
+    document.getElementById('addProductBtn').onclick = () => {
+        document.getElementById('productForm').reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('prodHot').checked = false;
+        document.getElementById('prodStock').value = '9999999';
+        loadPlans([]);
+        // Planes por defecto al crear
+        addPlanRow('1 día', 20);
+        addPlanRow('7 días', 15);
+        addPlanRow('1 mes', 10);
+        addPlanRow('3 meses', 8);
+        addPlanRow('6 meses', 6);
+        addPlanRow('1 año', 4);
+        document.getElementById('modalTitle').textContent = 'Agregar Producto';
+        document.getElementById('productModal').classList.add('active');
+        // clear file preview
+        const preview = document.getElementById('prodImagePreview');
+        preview.src = '';
+        preview.classList.add('hidden');
+    };
+
+    // Preview selected image from file input
+    document.getElementById('prodImageFile').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const preview = document.getElementById('prodImagePreview');
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+        } else {
+            preview.src = '';
+            preview.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const plans = getPlans();
+
+        // Build basic product object
+        const productData = {
+            name: document.getElementById('prodName').value,
+            price: parseFloat(document.getElementById('prodPrice').value) || (plans.length ? plans[0].price : 0),
+            category: document.getElementById('prodCategory').value || 'Sin categoría',
+            description: document.getElementById('prodDesc').value,
+            features: document.getElementById('prodFeatures').value,
+            image: document.getElementById('prodImage').value,
+            tutorial_url: document.getElementById('prodTutorialUrl').value || null,
+            youtube_url: document.getElementById('prodYoutubeUrl').value || null,
+            hot: document.getElementById('prodHot').checked,
+            stock: parseInt(document.getElementById('prodStock').value) || 9999999,
+            plans: plans
+        };
+
+        const fileInput = document.getElementById('prodImageFile');
+        const file = fileInput.files && fileInput.files[0];
+        if (file) {
+            try {
+                const ext = file.name.split('.').pop();
+                const filePath = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+                const { data: uploadData, error: uploadError } = await window.m7Supabase.storage.from('products').upload(filePath, file);
+                if (uploadError) {
+                    console.warn('Upload error:', uploadError.message || uploadError);
+                } else {
+                    const { data: publicData } = window.m7Supabase.storage.from('products').getPublicUrl(filePath);
+                    if (publicData && publicData.publicUrl) productData.image = publicData.publicUrl;
+                }
+            } catch (err) { console.error('Error subiendo imagen:', err); }
+        }
+
+        const id = document.getElementById('productId').value;
+        if (id) await window.m7Supabase.from('products').update(productData).eq('id', id);
+        else await window.m7Supabase.from('products').insert([productData]);
+        closeModal();
+        loadProducts();
+    });
+
+    function closeModal() { document.getElementById('productModal').classList.remove('active'); }
+    document.getElementById('logoutBtn').onclick = async () => { await window.m7Supabase.auth.signOut(); location.href = 'index.html'; };
+
+    loadProducts();
+</script>
+</body>
+</html>
